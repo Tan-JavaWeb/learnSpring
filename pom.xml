@@ -32,6 +32,10 @@
 		</dependency>
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-thymeleaf</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-web</artifactId>
 		</dependency>
 
@@ -75,9 +79,7 @@
 					<url>${database.url}</url>
 					<user>${database.username}</user>
 					<password>${database.password}</password>
-					<schemas>
-						<schema>dblearnspring</schema>
-					</schemas>
+					
 					<locations>
 						<location>db/migrations</location>
 					</locations>

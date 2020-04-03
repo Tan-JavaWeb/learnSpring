@@ -132,20 +132,22 @@
 			$("#form-update").addClass("d-none");
 			$("#show-search").removeClass("d-none");
 			$("#render-list").empty();
+			$("#form-insert").addClass("d-none");
 		}
 	
 		function showUpdate(){
 			$("#form-update").removeClass("d-none");
 			$("#render-list").empty();
 			$("#show-search").addClass("d-none");
+			$("#form-insert").addClass("d-none");
 		}
 		
 		function showList(){
 			$("#show-search").addClass("d-none");
 			$("#form-update").addClass("d-none");
+			$("#form-insert").addClass("d-none");
 		}
 		
-	
 		$('#uuid_id').on('change', function(){
 			$("#validate-update").empty();
 			console.log($(this).val())
@@ -325,7 +327,7 @@
 			$.ajax({
 				url : "api/v1/student",
 				success : function(response) {
-					var str = "";
+					var str = '<div id="validate-list"></div>';
 					str += '<table class="table table-sm table-striped table-hover table-bordered">';
 					str += '<thead>';
 					str += ' <tr>';
@@ -334,6 +336,7 @@
 					str += '  <th>last_name</th>';
 					str += '  <th>email</th>';
 					str += '  <th>gender</th>';
+					str += '  <th>option</th>';
 					str += ' </tr>';
 					str += '</thead>';
 					str += '<tbody>';
@@ -345,6 +348,9 @@
 						str += '  <td>' + value.lastName + '</td>';
 						str += '  <td>' + value.email + '</td>';
 						str += '  <td>' + value.gender + '</td>';
+						str += '  <td>';
+						str += '  	<button class="btn btn-sm btn-danger" onclick="actionDelete(\'' + value.studentId + '\')">Delete</button>';
+						str += '  </td>';
 						str += ' </tr>';
 					})
 
@@ -356,6 +362,34 @@
 					showList();
 				}
 			});
+		}
+		
+		function actionDelete(id){
+			if(confirm("Do you delete?") == true){
+				$.ajax({
+					url: "api/v1/student/delete/" + id,
+					success: function(response){
+						var message = "";
+			    		switch (response){
+				    	 	case 1: 
+				    	 		ajaxGetList();
+				    	 		alert("Delete success!");
+				    	 		break;
+				    	 	case 2: 
+				    	 		message += alertErr("No data found");
+				    	 		$("#validate-list").html(message);
+				    	 		break;
+				    	 	case 0:
+				    	 		message += alertErr("Error");
+				    	 		$("#validate-list").html(message);
+				    	 		break;
+				    	 }
+					},
+					error: function (e) {
+						console.log("error");
+		         	}
+				});
+			}
 		}
 		
 		function ajaxfind(){
@@ -401,10 +435,8 @@
 						$("#rendersearch").empty;
 						$("#rendersearch").html(str);
 					}
-					
 				}
 			});
-			
 		}
 	</script>
 </body>

@@ -84,7 +84,6 @@ public class StudentDataAccessService implements StudentDao {
 	// 3. duplicate email 2: duplicate key 1: success 0: error
 	@Override
 	public int insertStudent(UUID id, Student student) {
-		System.out.println(id.toString());
 		Optional<Student> st = getStudentById(id);
 		if (st.isPresent()) {
 			return 2;
@@ -126,10 +125,33 @@ public class StudentDataAccessService implements StudentDao {
 		sql.append("  EXISTS (SELECT 1 FROM student WHERE email = ? )");
 		return jdbcTemplate.queryForObject(sql.toString(), new Object[] {email}, (resultSet, numRow) -> resultSet.getBoolean(1));
 	}
+	
+	public boolean isStudentIdTaken(UUID id) {
+		StringBuffer  sql = new StringBuffer();
+		sql.append("SELECT ");
+		sql.append("  EXISTS (SELECT 1 FROM student WHERE student_id = ? )");
+		return jdbcTemplate.queryForObject(sql.toString(), new Object[] {id.toString()}, (resultSet, numRow) -> resultSet.getBoolean(1));
+	}
 
+	// 2: no data found 1: success 0: error
 	@Override
 	public int deleteStudentById(UUID id) {
-		return 0;
+		if(isStudentIdTaken(id)) {
+			try {
+				StringBuffer sql = new StringBuffer();
+				sql.append("DELETE FROM student ");
+				sql.append("WHERE student_id = ? ");
+				return jdbcTemplate.update(
+						sql.toString(),  
+						id.toString()
+					);
+			} catch (DataAccessException e) {
+				System.out.print("error connection");
+				return 0;
+			}
+		} else {
+			return 2;
+		}
 	}
 
 	// 2: No data found, 1: success 0: error
@@ -161,7 +183,6 @@ public class StudentDataAccessService implements StudentDao {
 				System.out.print("error connection");
 				return 0;
 			}
-
 		}
 	}
 }

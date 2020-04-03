@@ -46,20 +46,25 @@ public class StudentController {
 				.orElse(null);
 	}
 	
-	@DeleteMapping(path = "{id}")
-	public void deleteStudentByid(@PathVariable("id") UUID id) {
-		studentService.deleteStudentById(id);
+	@PostMapping(path="edit")
+	public int updateStudentById(@NotNull @RequestBody Student student) {
+		UUID id_uuid = student.getStudentId();
+		return studentService.updateStudentById(id_uuid, student);
 	}
+	
+	@GetMapping(path = "delete/{id}")
+	public int deleteStudentByid(@PathVariable("id") UUID id) {
+		return studentService.deleteStudentById(id);
+	}
+	
+//	@DeleteMapping(path = "{id}")
+//	public void deleteStudentByid(@PathVariable("id") UUID id) {
+//		studentService.deleteStudentById(id);
+//	}
 	
 //	@PostMapping(path="edit/{id}")
 //	public void updateStudentById(@RequestParam("id") String id,@Valid @NotNull @RequestBody Student student) {
 //		UUID id_uuid = UUID.fromString(id);
 //		studentService.updateStudentById(id_uuid, student);
 //	}
-	
-	@PostMapping(path="edit")
-	public int updateStudentById(@NotNull @RequestBody Student student) {
-		UUID id_uuid = student.getStudentId();
-		return studentService.updateStudentById(id_uuid, student);
-	}
 }

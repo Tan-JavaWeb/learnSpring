@@ -9,32 +9,37 @@
 <body>
 	<div class="container-fluid mt-5">
 		<div class="row">
-			<div class="col-md-6">
-				<button class="btn btn-primary" onclick="ajaxGetList()">get
-					list student</button>
+			<div class="col-md-12">
+				<button class="btn btn-primary col-md-2" onclick="ajaxGetList()">get list student</button>
+				<button class="btn btn-primary col-md-2" onclick="showSearch()">Search</button>
+				<button class="btn btn-primary col-md-2" onclick="showCreate()">Create</button>
+				<button class="btn btn-primary col-md-2" onclick="showUpdate()">Update</button>
 			</div>
+		</div>
+		
+		<div class="row mt-3">
+			<div class="col-md-12" id="render-list"></div>
+		</div>
+		
+		<div class="row mt-3 d-none" id="show-search">
 			<div class="col-md-6">
-				<div class="row">
-					<div class="col-md-6">
-						<div class="form-group">
-							<input type="text" class="form-control"
-								id="student-id" placeholder="Enter id student">
-						</div>
-					</div>
-					<div class="col-md-4">
-						<button class="btn btn-primary" onclick="ajaxfind()">Search</button>
-					</div>
+				<div class="form-group">
+					<input type="text" class="form-control"
+						id="student-id" placeholder="Enter id student">
 				</div>
 			</div>
+			<div class="col-md-4">
+				<button class="btn btn-primary" onclick="ajaxfind()">Search</button>
+			</div>
+			<div class="col-md-12" id="rendersearch"></div>
 		</div>
-		<div class="row mt-3">
-			<div class="col-md-6" id="render"></div>
-			<div class="col-md-6" id="rendersearch"></div>
-		</div>
-		<form id="form">
+		
+
+		<form id="form-update" class="d-none">
 			<div class="row border-top mt-3">	
 				<div class="col-md-12">
 					<h1>Update</h1>
+					<div id="validate-update"></div>
 				</div>	
 				<div class="col-md-6">
 					 <div class="form-group">
@@ -49,8 +54,6 @@
 					    <label>Last name</label>
 					    <input type="text" class="form-control" placeholder="Enter last name" id="lastname">
 					  </div>
-					  
-					  
 				</div>
 				<div class="col-md-6">
 					  <div class="form-group">
@@ -59,7 +62,55 @@
 					  </div>
 					  <div class="form-group">
 					    <label>Gender</label>
-					    <input type="text" class="form-control" placeholder="Enter gender" id="gender">
+					    <div class="form-check">
+						  <label class="form-check-label">
+						    <input type="radio" class="form-check-input" name="gender" value="MALE" id="male" checked>MALE
+						  </label>
+						</div>
+						<div class="form-check">
+						  <label class="form-check-label">
+						    <input type="radio" class="form-check-input" name="gender" value="FEMALE" id="female">FEMALE
+						  </label>
+						</div>
+					  </div>
+					  <button type="submit" class="btn btn-primary">Submit</button>
+				</div>
+			</div>
+		</form>
+		
+		<form id="form-insert" class="d-none">
+			<div class="row border-top mt-3">
+				<div class="col-md-12">
+					<h1>Create</h1>
+					<div id="validate-insert"></div>
+				</div>	
+				<div class="col-md-6">
+					  <div class="form-group">
+					    <label>First name</label>
+					    <input type="text" class="form-control" placeholder="Enter first name" id="firstname-insert">
+					  </div>
+					  <div class="form-group">
+					    <label>Last name</label>
+					    <input type="text" class="form-control" placeholder="Enter last name" id="lastname-insert">
+					  </div>
+				</div>
+				<div class="col-md-6">
+					  <div class="form-group">
+					    <label>Email</label>
+					    <input type="email" class="form-control" placeholder="Enter email" id="email-insert">
+					  </div>
+					  <div class="form-group">
+					    <label>Gender</label>
+					    <div class="form-check">
+						  <label class="form-check-label">
+						    <input type="radio" class="form-check-input" name="gender-insert" value="MALE" id="male-insert" checked>MALE
+						  </label>
+						</div>
+						<div class="form-check">
+						  <label class="form-check-label">
+						    <input type="radio" class="form-check-input" name="gender-insert" value="FEMALE" id="female-insert">FEMALE
+						  </label>
+						</div>
 					  </div>
 					  <button type="submit" class="btn btn-primary">Submit</button>
 				</div>
@@ -69,32 +120,206 @@
 	</div>
 	<script src="js/jquery.js"></script>
 	<script>
-		$("#form").submit(function (event) {
+	
+		function showCreate(){
+			$("#form-update").addClass("d-none");
+			$("#render-list").empty();
+			$("#show-search").addClass("d-none");
+			$("#form-insert").removeClass("d-none");
+		}
+		
+		function showSearch(){
+			$("#form-update").addClass("d-none");
+			$("#show-search").removeClass("d-none");
+			$("#render-list").empty();
+		}
+	
+		function showUpdate(){
+			$("#form-update").removeClass("d-none");
+			$("#render-list").empty();
+			$("#show-search").addClass("d-none");
+		}
+		
+		function showList(){
+			$("#show-search").addClass("d-none");
+			$("#form-update").addClass("d-none");
+		}
+		
+	
+		$('#uuid_id').on('change', function(){
+			$("#validate-update").empty();
+			console.log($(this).val())
+			var id = $(this).val();
+			if(id.toString().trim().length != 36){
+				$("#validate-update").html(alertErr('ID length = 36'));
+			} else {
+				$.ajax({
+					url : "api/v1/student/" + id,
+					success : function(response) {
+						if(!$.trim(response)){
+							$("#validate-update").html(alertErr('No data found'));
+						} else {
+							$("#firstname").val(response.firstName);
+							$("#lastname").val(response.lastName);
+							$("#email").val(response.email);
+							if(response.gender == "MALE"){
+								$("#male").attr("checked", true);
+								$("#female").attr("checked", false);
+							} else {
+								$("#male").attr("checked", false);
+								$("#female").attr("checked", true);
+							}
+						}
+					}
+				});
+			}
+		})
+		
+		$("#form-insert").submit(function (event) {
 			//stop submit the form event. Do this manually using ajax post function
 			event.preventDefault();
+			$("#validate-insert").empty;
+			var arr_err = [];
+			var str = "";
+			
+			if($("#firstname-insert").val().toString().trim().length == 0){
+				arr_err.push("First Name");
+			}
+			if($("#lastname-insert").val().toString().trim().length == 0){
+				arr_err.push("Last Name");
+			}
+			if($("#email-insert").val().toString().trim().length == 0){
+				arr_err.push("Email");
+			}
+			
+			if(arr_err.length > 0){
+				$.each(arr_err, function(index, value){	
+					str += alertErr(value + ' NOT NULL')
+				})
+			}
+			
+			if(str != ""){
+				$("#validate-insert").html(str);
+				return;
+			}
+			
 			var student = {}
-			 student["studentId"] = $("#uuid_id").val();
-			 student["firstName"] = $("#firstname").val();
-			 student["lastName"] = $("#lastname").val();
-			 student["email"] = $("#email").val();
-			 student["gender"] = $("#gender").val();
-			 console.log(student);
-			 $.ajax({
-	            type: "POST",
-	            contentType: "application/json",
-	            url: "api/v1/student/edit",
-	            data: JSON.stringify(student),
-	            dataType: 'json',
-	            cache: false,
-	            timeout: 600000,
-	            success: function (response) {
-                	console.log(response)
-	            },
-	            error: function (e) {
-	            	console.log(e)
-	            }
-	        });
+			student["firstName"] = $("#firstname-insert").val();
+			student["lastName"] = $("#lastname-insert").val();
+			student["email"] = $("#email-insert").val();
+			student["gender"] = $("input[name='gender-insert']:checked").val()
+
+			$.ajax({
+		         type: "POST",
+		         contentType: "application/json",
+		         url: "api/v1/student/insert",
+		         data: JSON.stringify(student),
+		         dataType: 'json',
+		         cache: false,
+		         timeout: 600000,
+		         success: function (response) {
+		        	 var message = "";
+		        	 switch (response){
+		        	 	case 1: 
+		        	 		message += alertSuccess('Create data success');
+		        	 		break;
+		        	 	case 2: 
+		        	 		message += alertErr("Duplicate ID");
+		        	 		break;
+		        	 	case 3: 
+		        	 		message += alertErr("Duplicate email");
+		        	 		break;
+		        	 	case 0:
+		        	 		message += alertErr("Error");
+		        	 		break;
+		        	 }
+		        	 $("#validate-insert").html(message);
+		         },
+		         error: function (e) {
+		         	console.log("error");
+		         }
+		     });
 		});
+		
+		$("#form-update").submit(function (event) {
+			//stop submit the form event. Do this manually using ajax post function
+			event.preventDefault();
+			$("#validate-update").empty;
+			var arr_err = [];
+			var str = "";
+			
+			if($("#uuid_id").val().toString().trim().length == 0){
+				arr_err.push("ID");
+			}
+			if($("#firstname").val().toString().trim().length == 0){
+				arr_err.push("First Name");
+			}
+			if($("#lastname").val().toString().trim().length == 0){
+				arr_err.push("Last Name");
+			}
+			if($("#email").val().toString().trim().length == 0){
+				arr_err.push("Email");
+			}
+			
+			if($("#uuid_id").val().toString().trim().length != 36){
+				str += alertErr('input length = 36')
+			}
+			
+			if(arr_err.length > 0){
+				$.each(arr_err, function(index, value){	
+					str += alertErr(value + ' NOT NULL')
+				})
+			}
+			
+			if(str != ""){
+				$("#validate-update").html(str);
+				return;
+			}
+			
+			var student = {}
+			student["studentId"] = $("#uuid_id").val();
+			student["firstName"] = $("#firstname").val();
+			student["lastName"] = $("#lastname").val();
+			student["email"] = $("#email").val();
+			student["gender"] = $("input[name='gender']:checked").val()
+
+			$.ajax({
+		         type: "POST",
+		         contentType: "application/json",
+		         url: "api/v1/student/edit",
+		         data: JSON.stringify(student),
+		         dataType: 'json',
+		         cache: false,
+		         timeout: 600000,
+		         success: function (response) {
+	            	if(response == 2){
+						$("#validate-update").html(alertErr("No data found with id = " + $("#uuid_id").val()));
+	            	}
+	            	if(response == 1){
+	            		$("#validate-update").html(alertSuccess('Create data success'));
+	            	}
+		         },
+		         error: function (e) {
+		         	console.log(e)
+		         }
+		     });
+		});
+		
+		function alertSuccess(s){
+			var tempstr = "";
+			tempstr += '<div class="alert alert-success" role="alert">';
+			tempstr += s;
+			tempstr += '</div>';
+			return tempstr;
+		}
+		
+		function alertErr(s){
+			var tempstr = "";
+			tempstr += '<div class="alert alert-danger" role="alert">';
+			tempstr += s;
+			tempstr += '</div>';
+			return tempstr;
+		}
 		
 		function ajaxGetList() {
 			$.ajax({
@@ -126,8 +351,9 @@
 					str += '</tbody>';
 					str += '</table>';
 
-					$("#render").empty;
-					$("#render").html(str);
+					$("#render-list").empty;
+					$("#render-list").html(str);
+					showList();
 				}
 			});
 		}
@@ -135,22 +361,18 @@
 		function ajaxfind(){
 			var student_id = $("#student-id").val();
 			if(student_id.toString().trim().length != 36){
-				var str = "";
-				str += '<div class="alert alert-danger" role="alert">';
-				str += 'input length = 36';
-				str += '</div>';
 				$("#rendersearch").empty;
-				$("#rendersearch").html(str);
+				$("#rendersearch").html(alertErr('ID length = 36'));
 				return;
 			}
+			
 			$.ajax({
 				url : "api/v1/student/" + student_id,
 				success : function(response) {
 					if(!$.trim(response)){
 						var str = "";
-						str += '<div class="alert alert-danger" role="alert">';
-						str += 'No data found';
-						str += '</div>';
+						str += alertErr('No data found');
+						
 						$("#rendersearch").empty;
 						$("#rendersearch").html(str);
 					} else {

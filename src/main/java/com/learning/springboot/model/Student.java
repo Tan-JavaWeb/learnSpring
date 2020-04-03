@@ -9,9 +9,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 public class Student {
 	private  UUID studentId;
-
 	
-
 	@NotBlank
 	private  String firstName;
 

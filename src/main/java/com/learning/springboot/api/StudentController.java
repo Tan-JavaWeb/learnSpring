@@ -30,9 +30,9 @@ public class StudentController {
 		this.studentService = studentService;
 	}
 	
-	@PostMapping
-	public void addStudent(@Valid @NotNull @RequestBody Student person) {
-		studentService.addStudent(person);
+	@PostMapping(path="insert")
+	public int addStudent(@RequestBody Student student) {
+		return studentService.addStudent(student);
 	}
 	
 	@GetMapping

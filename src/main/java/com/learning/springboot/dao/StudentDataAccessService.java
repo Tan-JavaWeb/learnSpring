@@ -27,8 +27,7 @@ public class StudentDataAccessService implements StudentDao {
 	@Override
 	public List<Student> getAllStudent() {
 		try {
-			String sql = "" + "SELECT " + " student_id, " + " first_name, " + " last_name, " + " email, " + " gender "
-					+ "FROM student";
+			String sql = "" + "SELECT student_id, first_name, last_name, email, gender FROM student";
 			return jdbcTemplate.query(sql, mapStudentFomDb());
 		} catch (InvalidResultSetAccessException e) {
 			System.out.print("error1");
@@ -69,13 +68,9 @@ public class StudentDataAccessService implements StudentDao {
 			sql.append("WHERE ");
 			sql.append("  student_id = ?");
 			List<Student> students = new ArrayList<>();
-			
-			students = jdbcTemplate.query(
-					sql.toString(), 
-					new Object[] { id.toString() },
-					mapStudentFomDb()
-				);
-			
+
+			students = jdbcTemplate.query(sql.toString(), new Object[] { id.toString() }, mapStudentFomDb());
+
 			return students.size() == 1 ? Optional.of(students.get(0)) : Optional.empty();
 		} catch (EmptyResultDataAccessException e) {
 			System.out.print("error empty data");
@@ -84,12 +79,52 @@ public class StudentDataAccessService implements StudentDao {
 			System.out.print("error connection");
 			return Optional.empty();
 		}
-		
 	}
 
+	// 3. duplicate email 2: duplicate key 1: success 0: error
 	@Override
 	public int insertStudent(UUID id, Student student) {
-		return 0;
+		System.out.println(id.toString());
+		Optional<Student> st = getStudentById(id);
+		if (st.isPresent()) {
+			return 2;
+		} else {
+			if(isEmailTaken(student.getEmail())) {
+				return 3;
+			} else {
+				try {
+					StringBuffer sql = new StringBuffer();
+					sql.append("INSERT ");
+					sql.append("INTO student( ");
+					sql.append("  student_id ");
+					sql.append("  , first_name ");
+					sql.append("  , last_name ");
+					sql.append("  , email ");
+					sql.append("  , gender ");
+					sql.append(") ");
+					sql.append("VALUES (? , ? , ? , ? , ? )");
+					return jdbcTemplate.update(
+							sql.toString(), 
+							id.toString(), 
+							student.getFirstName(), 
+							student.getLastName(),
+							student.getEmail(), 
+							student.getGender().name().toUpperCase()
+						);
+				} catch (DataAccessException e) {
+					System.out.print("error connection");
+					return 0;
+				}
+			}
+			
+		}
+	}
+	
+	public boolean isEmailTaken(String email) {
+		StringBuffer  sql = new StringBuffer();
+		sql.append("SELECT ");
+		sql.append("  EXISTS (SELECT 1 FROM student WHERE email = ? )");
+		return jdbcTemplate.queryForObject(sql.toString(), new Object[] {email}, (resultSet, numRow) -> resultSet.getBoolean(1));
 	}
 
 	@Override
@@ -97,8 +132,36 @@ public class StudentDataAccessService implements StudentDao {
 		return 0;
 	}
 
+	// 2: No data found, 1: success 0: error
 	@Override
 	public int updateStudentById(UUID id, Student student) {
-		return 0;
+		Optional<Student> st = getStudentById(id);
+		if (!st.isPresent()) {
+			return 2;
+		} else {
+			try {
+				StringBuffer sql = new StringBuffer();
+				sql.append("UPDATE student ");
+				sql.append("SET ");
+				sql.append("  first_name = ? ");
+				sql.append("  , last_name = ? ");
+				sql.append("  , email = ? ");
+				sql.append("  , gender = ? ");
+				sql.append("WHERE ");
+				sql.append("  student_id = ?");
+				return jdbcTemplate.update(
+						sql.toString(), 
+						student.getFirstName(), 
+						student.getLastName(),
+						student.getEmail(), 
+						student.getGender().name().toUpperCase(), 
+						id.toString()
+					);
+			} catch (DataAccessException e) {
+				System.out.print("error connection");
+				return 0;
+			}
+
+		}
 	}
 }
